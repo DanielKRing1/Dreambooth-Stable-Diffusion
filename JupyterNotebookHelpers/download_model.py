@@ -5,10 +5,11 @@ from ipywidgets import widgets, Layout, HBox
 
 
 class SDModelOption:
-    def __init__(self, repo_id, filename, manual=False):
+    def __init__(self, repo_id, filename, manual=False, local=False):
         self.repo_id = repo_id
         self.filename = filename
         self.manual = manual
+        self.local = local
 
     def download(self):
         if self.is_valid():
@@ -42,6 +43,8 @@ class DownloadModel:
             SDModelOption(repo_id="runwayml/stable-diffusion-v1-5", filename="v1-5-pruned.ckpt"),
             SDModelOption(repo_id="CompVis/stable-diffusion-v-1-4-original", filename="sd-v1-4.ckpt"),
             SDModelOption(repo_id="CompVis/stable-diffusion-v-1-4-original", filename="sd-v1-4-full-ema.ckpt"),
+            SDModelOption(repo_id="AnythingV5", filename="AnythingV5Ink_ink.ckpt"),
+            SDModelOption(repo_id="Local", filename=None, manual=True, local=True),
             SDModelOption(repo_id=None, filename=None, manual=True),
         ]
         self.available_models = [
@@ -50,7 +53,9 @@ class DownloadModel:
             ("v1-5-pruned.ckpt - 7.7gb - runwayml", 2),
             ("sd-v1-4.ckpt - 4.27gb - CompVis", 3),
             ("sd-v1-4-full-ema.ckpt - 7.7gb - CompVis", 4),
-            ("Manual", 5),
+            ("Anything V5", 5),
+            ("Local", 6),
+            ("Manual", 7),
         ]
 
         self.last_selected_index = 0
@@ -109,7 +114,19 @@ class DownloadModel:
                 selected_model.repo_id = self.model_repo_id_input.value
                 selected_model.filename = self.model_filename_input.value
 
-            if selected_model.is_valid():
+            if selected_model.local:
+                selected_model.filename = self.model_filename_input.value
+                
+                print("Using local model")
+                print("local model @ /workspace/"+selected_model.filename)
+                      
+                # try:
+                #     shutil.copy(f"/workspace/{selected_model.filename}", f"{selected_model.filename}")
+                #     print("Successfully copied local model @ /workspace/"+selected_model.filename)
+                    
+                # except:
+                #     print("Error copying the model")
+            elif selected_model.is_valid():
                 self.download_model_button.disabled = True
                 try:
                     downloaded_model_path = selected_model.download()
@@ -132,7 +149,7 @@ class DownloadModel:
             selected_model = self.get_selected_model()
 
             if selected_model.manual:
-                self.model_repo_id_input.disabled = False
+                self.model_repo_id_input.disabled = selected_model.local
                 self.model_repo_id_input.placeholder = 'runwayml/stable-diffusion-v1-5'
                 self.model_repo_id_input.description = "Enter Repo Id: "
                 self.model_filename_input.disabled = False
